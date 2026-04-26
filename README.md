@@ -18,7 +18,7 @@ Una vez clonado el repositorio, instala las herramientas necesarias para TypeScr
    ```bash
    npm install --save-dev @types/node
    
-3.**Ejecucion del prototipo:**
-  ```bash
-  cd src
-  npx ts-node index.ts
+3. **Ejecucion del prototipo:**
+   ```bash
+   cd src
+   npx ts-node index.ts

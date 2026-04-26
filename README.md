@@ -10,6 +10,15 @@ Este proyecto es una plataforma de visualización industrial diseñada para moni
 ### Instalación de Dependencias
 Una vez clonado el repositorio, instala las herramientas necesarias para TypeScript:
 
-```bash
-npm install -g typescript ts-node
-npm install
+1. **Instalar dependencias globales:**
+   ```bash
+   npm install -g typescript ts-node
+   
+2. **Instalar definiciones de tipo (Node.js):**
+   ```bash
+   npm install --save-dev @types/node
+   
+3.**Ejecucion del prototipo:**
+  ```bash
+  cd src
+  npx ts-node index.ts

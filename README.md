@@ -11,10 +11,9 @@ Este proyecto es una plataforma de visualización industrial diseñada para moni
 ### Instalación de Dependencias
 Una vez clonado el repositorio, instala las herramientas necesarias para Ejecutar el prototipo:
 
-1. **Instalar Live Server:**
+1. **Instalar extension para ejecutar:**
    ```bash
-    Extencion de Vscode
-   
+    Insatalar la extension "Live server" en VsCode 
 3. **Ejecutar el prototipo:**
    ```bash
    Click derecho en el archivo index.html

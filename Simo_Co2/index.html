@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimoCO2 - Acceso</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-screen" class="screen active">
+        <header class="main-header">
+            <img src="images/logos/logo_1.png" alt="SimoCO2" class="mini-logo">
+        </header>
+        <main class="viewport-center">
+            <div class="brand-container">
+
+                <div class="logo-side">
+                    <img src="images/logos/logo_2.png" alt="SimoCO2 Logo" class="main-brand-img">
+                    <h1 class="welcome-title">¡Bienvenido a SimoCO2!</h1>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-side">
+                    <p class="form-label">Iniciar Sesión</p>
+                    <input type="text" id="user" placeholder="Usuario">
+                    <input type="password" id="pass" placeholder="Contraseña">
+                    <button class="btn-primary" onclick="startLoading()">INICIAR SESIÓN</button>
+                    <button class="btn-secondary" onclick="alert('Funcionalidad disponible en Avance 4')">REGISTRARSE</button>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="loading-screen" class="screen">
+        <div class="viewport-center column">
+            <div class="spinner"></div>
+            <p class="status-msg" id="status">INICIALIZANDO SISTEMA...</p>
+        </div>
+    </div>
+
+    <script>
+        function startLoading() {
+            const usuario = document.getElementById('user').value.trim();
+            const clave   = document.getElementById('pass').value.trim();
+
+            if (!usuario || !clave) {
+                alert("Por favor ingresa usuario y contraseña.");
+                return;
+            }
+
+            document.getElementById('login-screen').classList.remove('active');
+            document.getElementById('loading-screen').classList.add('active');
+
+            const steps = [
+                "Configurando Sensores...",
+                "Sincronizando Datos...",
+                "Cargando Estrategia de Cálculo...",
+                "Abriendo Dashboard..."
+            ];
+
+            let i = 0;
+            const statusEl = document.getElementById('status');
+
+            const interval = setInterval(() => {
+                if (i < steps.length) {
+                    statusEl.innerText = steps[i].toUpperCase();
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    window.location.href = "dashboard.html";
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

@@ -1,8 +1,5 @@
 import { Widget, SensorPayload } from "../interfaces/Widget";
 
-// PATRÓN OBSERVER
-// Los sensores no saben quién los escucha. El DataDistributor
-// mantiene la lista de widgets y los notifica ante cada dato nuevo.
 export class DataDistributor {
     private observers: Map<string, Widget> = new Map();
 

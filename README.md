@@ -6,19 +6,16 @@ Este proyecto es una plataforma de visualización industrial diseñada para moni
 ### Requisitos Previos
 * **Node.js** (Versión LTS recomendada)
 * **npm** (Viene incluido con Node.js)
+* **VsCode** 
 
 ### Instalación de Dependencias
-Una vez clonado el repositorio, instala las herramientas necesarias para TypeScript:
+Una vez clonado el repositorio, instala las herramientas necesarias para Ejecutar el prototipo:
 
-1. **Instalar dependencias globales:**
+1. **Instalar Live Server:**
    ```bash
-   npm install -g typescript ts-node
+    Extencion de Vscode
    
-2. **Instalar definiciones de tipo (Node.js):**
+3. **Ejecutar el prototipo:**
    ```bash
-   npm install --save-dev @types/node
-   
-3. **Ejecucion del prototipo:**
-   ```bash
-   cd src
-   npx ts-node index.ts
+   Click derecho en el archivo index.html
+   Presionar "Open with live server"

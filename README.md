@@ -3,10 +3,12 @@ Este proyecto es una plataforma de visualización industrial diseñada para moni
 
 ## Guía de Inicio Rápido
 
+
 ### Requisitos Previos
 * **Node.js** (Versión LTS recomendada)
 * **npm** (Viene incluido con Node.js)
 * **VsCode** 
+
 
 ### Instalación de Dependencias
 Una vez clonado el repositorio, instala las herramientas necesarias para Ejecutar el prototipo:

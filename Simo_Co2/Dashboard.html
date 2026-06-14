@@ -16,51 +16,12 @@
             <span class="db-topbar-title">SimoCO2 Dashboard</span>
         </div>
         <div class="db-topbar-right">
-            <button class="normativa-btn" id="btn-informes" onclick="abrirInformes()">📄 INFORMES</button>
+            <button class="normativa-btn" id="btn-informes" onclick="generarPDF()">📄 INFORMES</button>
             <span class="db-badge" id="badge-normativa">NORMATIVA CHILE</span>
             <span class="db-badge" id="badge-estado">● ACTIVO</span>
             <div class="normativa-toggle">
                 <button class="normativa-btn active" id="btn-chile" onclick="cambiarNormativa('Chile')">CL</button>
-                <button class="normativa-btn" id="btn-eu" onclick="cambiarNormativa('EU')">EU</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-informes" class="modal-overlay" style="display:none">
-        <div class="modal-box">
-            <div class="modal-header">
-                <span class="modal-title">📄 Generador de Informes</span>
-                <button class="modal-close" onclick="cerrarInformes()">✕</button>
-            </div>
-            <div class="modal-body">
-                <p class="modal-desc">Genera un informe PDF con el resumen semanal simulado: consumo por sensor, CO₂ total y normativa utilizada.</p>
-                <div class="modal-stats" id="modal-stats">
-                    <div class="mstat">
-                        <div class="mstat-label">💧 Agua — Promedio semanal</div>
-                        <div class="mstat-val" id="inf-agua">--</div>
-                    </div>
-                    <div class="mstat">
-                        <div class="mstat-label">⚡ Electricidad — Promedio semanal</div>
-                        <div class="mstat-val" id="inf-luz">--</div>
-                    </div>
-                    <div class="mstat">
-                        <div class="mstat-label">🔥 Gas — Promedio semanal</div>
-                        <div class="mstat-val" id="inf-gas">--</div>
-                    </div>
-                    <div class="mstat">
-                        <div class="mstat-label"> CO₂ Total acumulado</div>
-                        <div class="mstat-val" id="inf-co2">--</div>
-                    </div>
-                    <div class="mstat">
-                        <div class="mstat-label">Normativa utilizada</div>
-                        <div class="mstat-val" id="inf-norm">--</div>
-                    </div>
-                    <div class="mstat">
-                        <div class="mstat-label">Semanas simuladas</div>
-                        <div class="mstat-val" id="inf-semanas">--</div>
-                    </div>
-                </div>
-                <button class="btn-pdf" onclick="generarPDF()">⬇ Descargar PDF</button>
+                <button class="normativa-btn" id="btn-eu"   onclick="cambiarNormativa('EU')">EU</button>
             </div>
         </div>
     </div>
@@ -104,10 +65,10 @@
             </div>
             <div class="sidebar-sistema">
                 <div class="sidebar-title">Sistema</div>
-                <div class="sidebar-sistema-row">Factory: <span>✓ activo</span></div>
-                <div class="sidebar-sistema-row">Observer: <span>✓ activo</span></div>
+                <div class="sidebar-sistema-row">Factory:   <span>✓ activo</span></div>
+                <div class="sidebar-sistema-row">Observer:  <span>✓ activo</span></div>
                 <div class="sidebar-sistema-row">Singleton: <span>✓ activo</span></div>
-                <div class="sidebar-sistema-row">Strategy: <span id="strategy-label">Chile</span></div>
+                <div class="sidebar-sistema-row">Strategy:  <span id="strategy-label">Chile</span></div>
             </div>
         </aside>
 
@@ -118,9 +79,9 @@
                 <div class="kpi-sub">kg semana en curso</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">Semana Simulada</div>
-                <div class="kpi-valor" id="kpi-lecturas">0</div>
-                <div class="kpi-sub">semanas transcurridas</div>
+                <div class="kpi-label">Semana / Trimestre</div>
+                <div class="kpi-valor" id="kpi-lecturas">0 / 12</div>
+                <div class="kpi-sub" id="kpi-ciclo">Ciclo 1</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Sensor Mayor Emisor</div>
@@ -135,7 +96,9 @@
         </div>
 
         <div class="db-chart-linea">
-            <div class="chart-title">Widget Consumo Semanal — 1 semana = 15 seg · Barras por Sensor</div>
+            <div class="chart-title" id="titulo-linea">
+                Widget Consumo Trimestral — Semana 0/12 · Ciclo 1 · 10 seg/semana
+            </div>
             <div class="chart-container" id="chart-linea"></div>
         </div>
 
@@ -160,24 +123,17 @@ const Repositorio = (() => {
         return {
             sensores: new Map(),
             widgets:  new Map(),
-            historicoSemanal: [],   // [{semana, agua, luz, gas, co2Agua, co2Luz, co2Gas, co2Total}]
+            historicoSemanal: [],
             estrategiaNombre: 'Chile',
             estrategia: null,
-            semanasSimuladas: 0,
-            registrarSensor(s)  { this.sensores.set(s.id, s); },
-            registrarWidget(w)  { this.widgets.set(w.id, w); },
-            agregarSemana(e)    { this.historicoSemanal.push(e); this.semanasSimuladas++; },
+            registrarSensor(s)      { this.sensores.set(s.id, s); },
+            registrarWidget(w)      { this.widgets.set(w.id, w); },
+            agregarSemana(e)        { this.historicoSemanal.push(e); },
             cambiarEstrategia(e, n) { this.estrategia = e; this.estrategiaNombre = n; },
-            getUltimasSemanas(n) { return this.historicoSemanal.slice(-n); },
-            getCO2Semana() {
-                const last = this.historicoSemanal[this.historicoSemanal.length - 1];
-                return last ? last.co2Total.toFixed(3) : '0.000';
-            }
         };
     }
     return { getInstancia() { if (!inst) inst = crear(); return inst; } };
 })();
-
 
 //  STRATEGY — Normativas
 const NormativaChile = {
@@ -191,7 +147,6 @@ const NormativaEU = {
     calcular(v, t) { return parseFloat((v * (this.factores[t] ?? 0.3)).toFixed(3)); }
 };
 
-
 //  FACTORY — Sensores
 let sc = 0;
 const SensorFactory = {
@@ -200,46 +155,42 @@ const SensorFactory = {
         const unidades = { agua: 'm³', luz: 'kWh', gas: 'm³' };
         let base = bases[tipo];
         return {
-            id: `S${++sc}-${tipo.toUpperCase()}`, tipo, unidad: unidades[tipo],
-            // Lectura individual 
+            id: `S${++sc}-${tipo.toUpperCase()}`,
+            tipo,
+            unidad: unidades[tipo],
             generarLectura() {
                 const f = (Math.random() - 0.5) * 14;
                 const p = Math.random() < 0.08 ? Math.random() * 20 : 0;
                 base = Math.max(5, Math.min(150, base + f * 0.3));
                 return parseFloat((base + p).toFixed(2));
-            },
-            // Promedio de 7 lecturas 
-            generarSemana() {
-                let total = 0;
-                for (let d = 0; d < 7; d++) total += this.generarLectura();
-                return parseFloat((total / 7).toFixed(2));
             }
         };
     }
 };
 
-
+//  FACTORY — Widgets
 let wc = 0;
 const WidgetFactory = {
     crear(tipo) {
         const buf = [];
         return {
-            id: `W${++wc}-${tipo.toUpperCase()}`, tipo,
-            update(d) { buf.push(d); if (buf.length > 52) buf.shift(); },
-            getBuffer() { return [...buf]; }
+            id: `W${++wc}-${tipo.toUpperCase()}`,
+            tipo,
+            update(d)    { buf.push(d); if (buf.length > 52) buf.shift(); },
+            getBuffer()  { return [...buf]; }
         };
     }
 };
 
-
+//  OBSERVER — DataDistributor
 const DataDistributor = {
     obs: new Map(),
     subscribe(w)    { this.obs.set(w.id, w); },
     notify(payload) { this.obs.forEach(w => w.update(payload)); }
 };
 
-
-const repo  = Repositorio.getInstancia();
+//  INICIALIZACIÓN
+const repo = Repositorio.getInstancia();
 repo.estrategia = NormativaChile;
 
 const sAgua = SensorFactory.crear('agua');
@@ -256,16 +207,22 @@ repo.registrarWidget(wCircular);
 DataDistributor.subscribe(wBarras);
 DataDistributor.subscribe(wCircular);
 
-
+//  ECHARTS — BARRAS TRIMESTRALES (Widget 1)
 const chartLinea = echarts.init(document.getElementById('chart-linea'), 'dark');
 
-const labelsEje  = [];   
-const dataAgua   = [];
-const dataLuz    = [];
-const dataGas    = [];
+// Datos del trimestre en curso 
+// Cada semana tiene una barra "viva" que crece con los ticks
+// y se fija al consolidar
+let labelsEje = [];   
+let dataAgua  = [];
+let dataLuz   = [];
+let dataGas   = [];
 
 chartLinea.setOption({
     backgroundColor: 'transparent',
+    animation: true,
+    animationDuration: 400,
+    animationEasing: 'cubicOut',
     tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -275,7 +232,8 @@ chartLinea.setOption({
         formatter(params) {
             let html = `<div style="margin-bottom:4px;color:#78909C;font-size:10px">${params[0].axisValue}</div>`;
             params.forEach(p => {
-                html += `<div>${p.marker} ${p.seriesName}: <b>${p.value}</b></div>`;
+                if (p.value != null)
+                    html += `<div>${p.marker} ${p.seriesName}: <b>${p.value}</b></div>`;
             });
             return html;
         }
@@ -288,7 +246,7 @@ chartLinea.setOption({
     grid: { left: 52, right: 16, top: 40, bottom: 28 },
     xAxis: {
         type: 'category',
-        data: labelsEje,
+        data: [],
         axisLabel: { color: '#546E7A', fontSize: 9, rotate: 30 },
         axisLine:  { lineStyle: { color: '#2a3a30' } },
         splitLine: { show: false }
@@ -297,32 +255,23 @@ chartLinea.setOption({
         type: 'value',
         name: 'Promedio diario',
         nameTextStyle: { color: '#546E7A', fontSize: 9 },
-        axisLabel: { color: '#546E7A', fontSize: 9 },
-        splitLine: { lineStyle: { color: '#1e2a22' } }
+        axisLabel:  { color: '#546E7A', fontSize: 9 },
+        splitLine:  { lineStyle: { color: '#1e2a22' } }
     },
     series: [
-        {
-            name: 'Agua (m³)', type: 'bar', data: dataAgua,
-            barMaxWidth: 18,
-            itemStyle: { color: '#29B6F6', borderRadius: [3,3,0,0] },
-            emphasis: { itemStyle: { color: '#4FC3F7' } }
-        },
-        {
-            name: 'Electricidad (kWh)', type: 'bar', data: dataLuz,
-            barMaxWidth: 18,
-            itemStyle: { color: '#FFA726', borderRadius: [3,3,0,0] },
-            emphasis: { itemStyle: { color: '#FFB74D' } }
-        },
-        {
-            name: 'Gas (m³)', type: 'bar', data: dataGas,
-            barMaxWidth: 18,
-            itemStyle: { color: '#EF5350', borderRadius: [3,3,0,0] },
-            emphasis: { itemStyle: { color: '#E57373' } }
-        }
+        { name: 'Agua (m³)',        type: 'bar', data: [], barMaxWidth: 20,
+          itemStyle: { color: '#29B6F6', borderRadius: [4,4,0,0] },
+          emphasis: { itemStyle: { color: '#4FC3F7' } } },
+        { name: 'Electricidad (kWh)', type: 'bar', data: [], barMaxWidth: 20,
+          itemStyle: { color: '#FFA726', borderRadius: [4,4,0,0] },
+          emphasis: { itemStyle: { color: '#FFB74D' } } },
+        { name: 'Gas (m³)',         type: 'bar', data: [], barMaxWidth: 20,
+          itemStyle: { color: '#EF5350', borderRadius: [4,4,0,0] },
+          emphasis: { itemStyle: { color: '#E57373' } } },
     ]
 });
 
-
+//  ECHARTS — DONUT CO2 (Widget 2)
 const chartCircular = echarts.init(document.getElementById('chart-circular'), 'dark');
 chartCircular.setOption({
     backgroundColor: 'transparent',
@@ -339,23 +288,43 @@ chartCircular.setOption({
     }]
 });
 
+//  ESTADO GLOBAL
+const ultimoCO2  = { agua: 0, luz: 0, gas: 0 };
+const bufSemana  = { agua: [], luz: [], gas: [] };
+let semanaTotal  = 0;   
+let semanaEnCiclo = 0;  
+let cicloNum     = 1;
 
-let semanaNum       = 0;
-const ultimoCO2     = { agua: 0, luz: 0, gas: 0 };
-const ultimoValor   = { agua: 0, luz: 0, gas: 0 };
-
-function getEtiquetaSemana(n) {
-    const hoy  = new Date();
-    const d    = new Date(hoy.getTime() - (n * 7 * 24 * 3600 * 1000));
-    return `S${n+1} ${d.getDate()}/${d.getMonth()+1}`;
+// Etiqueta para el eje X
+function labelSemana(pos) {
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const d = new Date();
+    d.setDate(d.getDate() + pos * 7);
+    return `S${pos + 1} ${d.getDate()}/${meses[d.getMonth()]}`;
 }
 
+// Actualiza el gráfico mostrando barras consolidadas
+function actualizarGraficoLinea(vivoAgua, vivoLuz, vivoGas) {
+    const labels = [...labelsEje, labelSemana(semanaEnCiclo) + ' ▶'];
+    const dA     = [...dataAgua,  vivoAgua];
+    const dL     = [...dataLuz,   vivoLuz];
+    const dG     = [...dataGas,   vivoGas];
 
+    // La última barra (en curso) usa color más brillante
+    const colorBar = (base, bright) => dA.map((_, i) =>
+        i === dA.length - 1 ? bright : base);
 
+    chartLinea.setOption({
+        xAxis: { data: labels },
+        series: [
+            { data: dA, itemStyle: { color: (params) => params.dataIndex === dA.length-1 ? '#64D8FC' : '#29B6F6', borderRadius: [4,4,0,0] } },
+            { data: dL, itemStyle: { color: (params) => params.dataIndex === dL.length-1 ? '#FFCC02' : '#FFA726', borderRadius: [4,4,0,0] } },
+            { data: dG, itemStyle: { color: (params) => params.dataIndex === dG.length-1 ? '#FF7675' : '#EF5350', borderRadius: [4,4,0,0] } },
+        ]
+    }, false);
+}
 
-const bufSemana = { agua: [], luz: [], gas: [] };
-
-
+//  TICK RÁPIDO 
 function tickRapido() {
     const vAgua = sAgua.generarLectura();
     const vLuz  = sLuz.generarLectura();
@@ -370,33 +339,38 @@ function tickRapido() {
     const co2Gas  = repo.estrategia.calcular(vGas,  'gas');
     const co2Tot  = parseFloat((co2Agua + co2Luz + co2Gas).toFixed(3));
 
-    ultimoCO2.agua = co2Agua; ultimoCO2.luz = co2Luz; ultimoCO2.gas = co2Gas;
+    ultimoCO2.agua = co2Agua;
+    ultimoCO2.luz  = co2Luz;
+    ultimoCO2.gas  = co2Gas;
 
-   
-    document.getElementById('val-agua').textContent = vAgua.toFixed(1);
-    document.getElementById('val-luz').textContent  = vLuz.toFixed(1);
-    document.getElementById('val-gas').textContent  = vGas.toFixed(1);
-    document.getElementById('co2-agua').textContent = `CO₂: ${co2Agua} kg`;
-    document.getElementById('co2-luz').textContent  = `CO₂: ${co2Luz} kg`;
-    document.getElementById('co2-gas').textContent  = `CO₂: ${co2Gas} kg`;
+    // Sidebar en vivo
+    document.getElementById('val-agua').textContent  = vAgua.toFixed(1);
+    document.getElementById('val-luz').textContent   = vLuz.toFixed(1);
+    document.getElementById('val-gas').textContent   = vGas.toFixed(1);
+    document.getElementById('co2-agua').textContent  = `CO₂: ${co2Agua} kg`;
+    document.getElementById('co2-luz').textContent   = `CO₂: ${co2Luz} kg`;
+    document.getElementById('co2-gas').textContent   = `CO₂: ${co2Gas} kg`;
 
-    const tipos = ['agua','luz','gas'];
-    tipos.forEach(t => {
-        const card = document.getElementById(`card-${t}`);
-        card.classList.add('pulse');
-        setTimeout(() => card.classList.remove('pulse'), 250);
+    // Pulso
+    ['agua','luz','gas'].forEach(t => {
+        const c = document.getElementById(`card-${t}`);
+        c.classList.add('pulse');
+        setTimeout(() => c.classList.remove('pulse'), 240);
     });
 
-
+    // Donut en vivo
     chartCircular.setOption({ series: [{ data: [
         { value: co2Agua, name: 'Agua', itemStyle: { color: '#29B6F6' } },
         { value: co2Luz,  name: 'Luz',  itemStyle: { color: '#FFA726' } },
         { value: co2Gas,  name: 'Gas',  itemStyle: { color: '#EF5350' } },
     ]}]});
 
+    // Barra viva en el gráfico de barras
+    actualizarGraficoLinea(vAgua, vLuz, vGas);
 
+    // KPIs
     document.getElementById('kpi-co2total').textContent = co2Tot.toFixed(3);
-    const top = Object.entries(ultimoCO2).sort((a,b)=>b[1]-a[1])[0];
+    const top = Object.entries(ultimoCO2).sort((a,b) => b[1]-a[1])[0];
     const ico = { agua:'💧', luz:'⚡', gas:'🔥' };
     document.getElementById('kpi-top').textContent =
         `${ico[top[0]]} ${top[0].toUpperCase()} — ${top[1]} kg`;
@@ -405,15 +379,15 @@ function tickRapido() {
 }
 
 
+//  CONSOLIDACIÓN SEMANAL 
 function consolidarSemana() {
-    const promedio = arr => arr.length
-        ? parseFloat((arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2))
+    const avg = arr => arr.length
+        ? parseFloat((arr.reduce((s,v) => s+v, 0) / arr.length).toFixed(2))
         : 0;
 
-    const vAgua = promedio(bufSemana.agua);
-    const vLuz  = promedio(bufSemana.luz);
-    const vGas  = promedio(bufSemana.gas);
-
+    const vAgua = avg(bufSemana.agua);
+    const vLuz  = avg(bufSemana.luz);
+    const vGas  = avg(bufSemana.gas);
 
     bufSemana.agua.length = 0;
     bufSemana.luz.length  = 0;
@@ -424,37 +398,58 @@ function consolidarSemana() {
     const co2Gas  = repo.estrategia.calcular(vGas,  'gas');
     const co2Tot  = parseFloat((co2Agua + co2Luz + co2Gas).toFixed(3));
 
-    const entrada = { semana: semanaNum, agua: vAgua, luz: vLuz, gas: vGas,
-                      co2Agua, co2Luz, co2Gas, co2Total: co2Tot,
-                      normativa: repo.estrategiaNombre };
-    repo.agregarSemana(entrada);
-    DataDistributor.notify(entrada);
+    // Guardar en repositorio
+    repo.agregarSemana({
+        semana: semanaTotal + 1,
+        ciclo: cicloNum,
+        agua: vAgua, luz: vLuz, gas: vGas,
+        co2Agua, co2Luz, co2Gas, co2Total: co2Tot,
+        normativa: repo.estrategiaNombre
+    });
+    DataDistributor.notify({ agua: vAgua, luz: vLuz, gas: vGas });
 
-    const label = getEtiquetaSemana(semanaNum);
-    labelsEje.push(label);
+    // Fijar la barra consolidada
+    labelsEje.push(labelSemana(semanaEnCiclo));
     dataAgua.push(vAgua);
     dataLuz.push(vLuz);
     dataGas.push(vGas);
-    if (labelsEje.length > 12) {
-        labelsEje.shift(); dataAgua.shift(); dataLuz.shift(); dataGas.shift();
+
+    semanaTotal++;
+    semanaEnCiclo++;
+
+    // Al llegar a 12 semanas: nuevo trimestre
+    if (semanaEnCiclo >= 12) {
+        cicloNum++;
+        semanaEnCiclo = 0;
+
+        // Flash de reset: vaciar arrays y limpiar gráfico
+        setTimeout(() => {
+            labelsEje.length = 0;
+            dataAgua.length  = 0;
+            dataLuz.length   = 0;
+            dataGas.length   = 0;
+            chartLinea.setOption({
+                xAxis:  { data: [] },
+                series: [{ data:[] }, { data:[] }, { data:[] }]
+            });
+        }, 600);
     }
 
-    chartLinea.setOption({
-        xAxis:  { data: [...labelsEje] },
-        series: [{ data: [...dataAgua] }, { data: [...dataLuz] }, { data: [...dataGas] }]
-    });
-
-    semanaNum++;
-    document.getElementById('kpi-lecturas').textContent = semanaNum;
-    document.getElementById('status-der').textContent =
-        `● Semana ${semanaNum} consolidada — CO₂ promedio: ${co2Tot} kg — ${repo.estrategiaNombre}`;
+    // Actualizar título y KPIs
+    document.getElementById('titulo-linea').textContent =
+        `Widget Consumo Trimestral — Semana ${semanaEnCiclo}/12 · Ciclo ${cicloNum} · 10 seg/semana`;
+    document.getElementById('kpi-lecturas').textContent = `${semanaEnCiclo} / 12`;
+    document.getElementById('kpi-ciclo').textContent    = `Ciclo ${cicloNum}`;
+    document.getElementById('status-der').textContent   =
+        `● Semana ${semanaTotal} consolidada — CO₂: ${co2Tot} kg — ${repo.estrategiaNombre}`;
 }
 
-
+//  ARRANQUE
 tickRapido();
-setInterval(tickRapido, 300);
-setInterval(consolidarSemana, 15000);
+setInterval(tickRapido,       300);
+setInterval(consolidarSemana, 10000);
 
+//  CAMBIO DE NORMATIVA — Strategy
 function cambiarNormativa(nombre) {
     const e = nombre === 'Chile' ? NormativaChile : NormativaEU;
     repo.cambiarEstrategia(e, e.nombre);
@@ -465,195 +460,165 @@ function cambiarNormativa(nombre) {
     document.getElementById('btn-eu').classList.toggle('active',    nombre === 'EU');
 }
 
-
-function abrirInformes() {
-    const hist = repo.historicoSemanal;
-    if (hist.length === 0) {
-        alert('Aún no hay datos. Espera al menos una semana simulada.');
-        return;
-    }
-    const promedioAgua = (hist.reduce((s,e)=>s+e.agua,0)/hist.length).toFixed(2);
-    const promedioLuz  = (hist.reduce((s,e)=>s+e.luz, 0)/hist.length).toFixed(2);
-    const promedioGas  = (hist.reduce((s,e)=>s+e.gas, 0)/hist.length).toFixed(2);
-    const co2Total     = hist.reduce((s,e)=>s+e.co2Total,0).toFixed(3);
-
-    document.getElementById('inf-agua').textContent   = `${promedioAgua} m³/día`;
-    document.getElementById('inf-luz').textContent    = `${promedioLuz} kWh/día`;
-    document.getElementById('inf-gas').textContent    = `${promedioGas} m³/día`;
-    document.getElementById('inf-co2').textContent    = `${co2Total} kg CO₂`;
-    document.getElementById('inf-norm').textContent   = repo.estrategiaNombre;
-    document.getElementById('inf-semanas').textContent= `${hist.length} semanas`;
-
-    document.getElementById('modal-informes').style.display = 'flex';
-}
-
-function cerrarInformes() {
-    document.getElementById('modal-informes').style.display = 'none';
-}
-
-
 //  GENERADOR PDF 
 function generarPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const hist = repo.historicoSemanal;
-    const W    = 210; const M = 18;
+    if (hist.length === 0) {
+        alert('Espera al menos una semana simulada (10 segundos).');
+        return;
+    }
 
-    // Colores
-    const C_DARK  = [55, 71, 79];
-    const C_GREEN = [76, 175, 80];
-    const C_MID   = [120, 144, 156];
-    const C_LIGHT = [236, 239, 241];
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, M = 18;
 
-    // Header 
-    doc.setFillColor(...C_DARK);
-    doc.rect(0, 0, W, 28, 'F');
+    const CD = [55, 71, 79];
+    const CG = [76, 175, 80];
+    const CM = [120, 144, 156];
+    const CL = [236, 239, 241];
+
+    // Header
+    doc.setFillColor(...CD); doc.rect(0, 0, W, 28, 'F');
     doc.setFontSize(18); doc.setFont('helvetica','bold');
-    doc.setTextColor(...C_GREEN);
+    doc.setTextColor(...CG);
     doc.text('SIMO CO2', M, 12);
     doc.setFontSize(9); doc.setFont('helvetica','normal');
     doc.setTextColor(200, 220, 200);
     doc.text('Sistema de Monitoreo de Huella de Carbono e Indicadores Industriales', M, 19);
-    doc.setFontSize(8); doc.setTextColor(120,144,156);
+    doc.setFontSize(8); doc.setTextColor(...CM);
     doc.text(`Generado: ${new Date().toLocaleString('es-CL')}`, M, 25);
 
-    // Titulo informe 
     let y = 38;
     doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.setTextColor(...C_DARK);
-    doc.text('Informe Semanal de Consumo y Huella de Carbono', M, y);
+    doc.setTextColor(...CD);
+    doc.text('Informe Trimestral de Consumo y Huella de Carbono', M, y);
     y += 6;
-    doc.setFillColor(...C_GREEN);
-    doc.rect(M, y, W - M*2, 0.8, 'F');
+    doc.setFillColor(...CG); doc.rect(M, y, W-M*2, 0.8, 'F');
     y += 7;
 
-    // Resumen general 
-    const promedioAgua = (hist.reduce((s,e)=>s+e.agua,0)/hist.length).toFixed(2);
-    const promedioLuz  = (hist.reduce((s,e)=>s+e.luz, 0)/hist.length).toFixed(2);
-    const promedioGas  = (hist.reduce((s,e)=>s+e.gas, 0)/hist.length).toFixed(2);
-    const co2Total     = hist.reduce((s,e)=>s+e.co2Total,0).toFixed(3);
-    const co2Agua      = hist.reduce((s,e)=>s+e.co2Agua,0).toFixed(3);
-    const co2Luz       = hist.reduce((s,e)=>s+e.co2Luz, 0).toFixed(3);
-    const co2Gas       = hist.reduce((s,e)=>s+e.co2Gas, 0).toFixed(3);
+    // Resumen 3 columnas
+    const co2Total = hist.reduce((s,e) => s+e.co2Total, 0).toFixed(3);
+    const pAgua    = (hist.reduce((s,e) => s+e.agua, 0) / hist.length).toFixed(2);
+    const pLuz     = (hist.reduce((s,e) => s+e.luz,  0) / hist.length).toFixed(2);
+    const pGas     = (hist.reduce((s,e) => s+e.gas,  0) / hist.length).toFixed(2);
+    const cAgua    = hist.reduce((s,e) => s+e.co2Agua, 0).toFixed(3);
+    const cLuz     = hist.reduce((s,e) => s+e.co2Luz,  0).toFixed(3);
+    const cGas     = hist.reduce((s,e) => s+e.co2Gas,  0).toFixed(3);
+    const colW     = (W-M*2)/3;
 
-    const colW = (W - M*2) / 3;
-    const resumen = [
-        { label: 'Semanas simuladas', val: hist.length },
-        { label: 'Normativa utilizada', val: repo.estrategiaNombre },
-        { label: 'CO₂ Total acumulado', val: `${co2Total} kg` },
-    ];
-    resumen.forEach((r, i) => {
-        const cx = M + i * colW;
-        doc.setFillColor(...C_LIGHT);
-        doc.roundedRect(cx, y, colW-2, 20, 2, 2, 'F');
+    [
+        { label: 'Semanas simuladas',  val: hist.length },
+        { label: 'Normativa utilizada',val: repo.estrategiaNombre },
+        { label: 'CO₂ Total acumulado',val: `${co2Total} kg` },
+    ].forEach((r, i) => {
+        const cx = M + i*colW;
+        doc.setFillColor(...CL); doc.roundedRect(cx, y, colW-2, 20, 2, 2, 'F');
         doc.setFontSize(7); doc.setFont('helvetica','normal');
-        doc.setTextColor(...C_MID);
+        doc.setTextColor(...CM);
         doc.text(r.label.toUpperCase(), cx+4, y+7);
         doc.setFontSize(11); doc.setFont('helvetica','bold');
-        doc.setTextColor(...C_DARK);
+        doc.setTextColor(...CD);
         doc.text(String(r.val), cx+4, y+16);
     });
     y += 26;
 
+    // Tabla sensores
     doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.setTextColor(...C_DARK);
+    doc.setTextColor(...CD);
     doc.text('Consumo Promedio Diario por Sensor', M, y);
     y += 5;
-
-    const sensores = [
-        { nombre: 'Agua',          promedio: promedioAgua, unidad: 'm³/día',  co2: co2Agua, color: [41,182,246] },
-        { nombre: 'Electricidad',  promedio: promedioLuz,  unidad: 'kWh/día', co2: co2Luz,  color: [255,167,38] },
-        { nombre: 'Gas',           promedio: promedioGas,  unidad: 'm³/día',  co2: co2Gas,  color: [239,83,80]  },
-    ];
-    const cw = (W - M*2) / 4;
-    ['Sensor','Promedio diario','CO₂ acumulado','% del total'].forEach((h,i)=>{
-        doc.setFillColor(...C_DARK);
-        doc.rect(M + i*cw, y, cw, 8, 'F');
+    const cw = (W-M*2)/4;
+    ['Sensor','Promedio diario','CO₂ acumulado','% del total'].forEach((h,i) => {
+        doc.setFillColor(...CD); doc.rect(M+i*cw, y, cw, 8, 'F');
         doc.setFontSize(8); doc.setFont('helvetica','bold');
         doc.setTextColor(255,255,255);
-        doc.text(h, M + i*cw + 3, y+5.5);
+        doc.text(h, M+i*cw+3, y+5.5);
     });
     y += 8;
-    sensores.forEach((s,i)=>{
+    [
+        { nombre:'Agua',         promedio:pAgua, unidad:'m³/día',  co2:cAgua, color:[41,182,246] },
+        { nombre:'Electricidad', promedio:pLuz,  unidad:'kWh/día', co2:cLuz,  color:[255,167,38] },
+        { nombre:'Gas',          promedio:pGas,  unidad:'m³/día',  co2:cGas,  color:[239,83,80]  },
+    ].forEach((s,i) => {
         const pct = ((parseFloat(s.co2)/parseFloat(co2Total))*100).toFixed(1);
-        const bg  = i%2===0 ? C_LIGHT : [255,255,255];
-        doc.setFillColor(...bg); doc.rect(M, y, W-M*2, 9, 'F');
-        doc.setFillColor(...s.color); doc.roundedRect(M+1, y+2, 3, 5, 1, 1, 'F');
+        doc.setFillColor(...(i%2===0 ? CL : [255,255,255]));
+        doc.rect(M, y, W-M*2, 9, 'F');
+        doc.setFillColor(...s.color);
+        doc.roundedRect(M+1, y+2, 3, 5, 1, 1, 'F');
         doc.setFontSize(9); doc.setFont('helvetica','bold');
-        doc.setTextColor(...C_DARK);
+        doc.setTextColor(...CD);
         doc.text(s.nombre, M+6, y+6.5);
         doc.setFont('helvetica','normal');
-        doc.text(`${s.promedio} ${s.unidad}`, M+cw+3, y+6.5);
-        doc.text(`${s.co2} kg`, M+cw*2+3, y+6.5);
-        doc.text(`${pct}%`, M+cw*3+3, y+6.5);
+        doc.text(`${s.promedio} ${s.unidad}`, M+cw+3,   y+6.5);
+        doc.text(`${s.co2} kg`,               M+cw*2+3, y+6.5);
+        doc.text(`${pct}%`,                   M+cw*3+3, y+6.5);
         y += 9;
     });
     y += 8;
 
-    //Tabla detalle semanal 
+    // Tabla detalle por semana
     doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.setTextColor(...C_DARK);
+    doc.setTextColor(...CD);
     doc.text('Detalle por Semana Simulada', M, y);
     y += 5;
-
-    const cols2 = ['Semana','Agua m³','Elec. kWh','Gas m³','CO₂ kg','Normativa'];
-    const cw2   = (W-M*2)/cols2.length;
-    cols2.forEach((h,i)=>{
-        doc.setFillColor(...C_DARK); doc.rect(M+i*cw2, y, cw2, 7, 'F');
+    const cw2 = (W-M*2)/6;
+    ['Semana','Ciclo','Agua m³','Elec. kWh','Gas m³','CO₂ kg'].forEach((h,i) => {
+        doc.setFillColor(...CD); doc.rect(M+i*cw2, y, cw2, 7, 'F');
         doc.setFontSize(7); doc.setFont('helvetica','bold');
         doc.setTextColor(255,255,255);
         doc.text(h, M+i*cw2+2, y+5);
     });
     y += 7;
-
-    hist.forEach((e,i)=>{
+    hist.forEach((e,i) => {
         if (y > 270) { doc.addPage(); y = 20; }
-        const bg = i%2===0 ? C_LIGHT : [255,255,255];
-        doc.setFillColor(...bg); doc.rect(M, y, W-M*2, 7, 'F');
+        doc.setFillColor(...(i%2===0 ? CL : [255,255,255]));
+        doc.rect(M, y, W-M*2, 7, 'F');
         doc.setFontSize(7); doc.setFont('helvetica','normal');
-        doc.setTextColor(...C_DARK);
-        const row = [`Sem. ${i+1}`, e.agua.toFixed(1), e.luz.toFixed(1), e.gas.toFixed(1), e.co2Total.toFixed(3), e.normativa.split(' ')[1] || e.normativa];
-        row.forEach((v,j)=>{ doc.text(v, M+j*cw2+2, y+5); });
+        doc.setTextColor(...CD);
+        [
+            `Sem. ${e.semana}`, String(e.ciclo),
+            e.agua.toFixed(1), e.luz.toFixed(1),
+            e.gas.toFixed(1),  e.co2Total.toFixed(3)
+        ].forEach((v,j) => doc.text(v, M+j*cw2+2, y+5));
         y += 7;
     });
     y += 10;
 
-    // Factores de la normativa 
+    // Factores normativa
     if (y > 250) { doc.addPage(); y = 20; }
     doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.setTextColor(...C_DARK);
-    doc.text(`Factores de Conversión — ${repo.estrategiaNombre}`, M, y);
+    doc.setTextColor(...CD);
+    doc.text(`Factores de Conversion — ${repo.estrategiaNombre}`, M, y);
     y += 5;
-    const factores = repo.estrategia.factores;
-    const fRows = [
-        ['Recurso','Factor (kg CO₂/unidad)','Unidad'],
-        ['Agua',          factores.agua, 'm³'],
-        ['Electricidad',  factores.luz,  'kWh'],
-        ['Gas',           factores.gas,  'm³'],
-    ];
-    const cw3 = (W-M*2)/3;
-    fRows.forEach((row,i)=>{
-        const bg = i===0 ? C_DARK : (i%2===0 ? C_LIGHT : [255,255,255]);
+    const f = repo.estrategia.factores;
+    [
+        ['Recurso','Factor (kg CO2/unidad)','Unidad'],
+        ['Agua',          String(f.agua), 'm3'],
+        ['Electricidad',  String(f.luz),  'kWh'],
+        ['Gas',           String(f.gas),  'm3'],
+    ].forEach((row,i) => {
+        const bg = i===0 ? CD : (i%2===0 ? CL : [255,255,255]);
         doc.setFillColor(...bg); doc.rect(M, y, W-M*2, 7, 'F');
         doc.setFontSize(8);
         doc.setFont('helvetica', i===0 ? 'bold' : 'normal');
-        doc.setTextColor(i===0 ? 255 : C_DARK[0], i===0 ? 255 : C_DARK[1], i===0 ? 255 : C_DARK[2]);
-        row.forEach((v,j)=>{ doc.text(String(v), M+j*cw3+3, y+5); });
+        doc.setTextColor(i===0 ? 255:CD[0], i===0 ? 255:CD[1], i===0 ? 255:CD[2]);
+        const cw3 = (W-M*2)/3;
+        row.forEach((v,j) => doc.text(v, M+j*cw3+3, y+5));
         y += 7;
     });
 
-    const pages = doc.getNumberOfPages();
-    for (let p=1; p<=pages; p++) {
+    // Footer en todas las páginas
+    for (let p=1; p<=doc.getNumberOfPages(); p++) {
         doc.setPage(p);
-        doc.setFillColor(...C_LIGHT);
-        doc.rect(0, 287, W, 10, 'F');
+        doc.setFillColor(...CL); doc.rect(0, 287, W, 10, 'F');
         doc.setFontSize(7); doc.setFont('helvetica','normal');
-        doc.setTextColor(...C_MID);
+        doc.setTextColor(...CM);
         doc.text('SIMO CO2  ·  Universidad de Los Lagos  ·  TPA 2026', M, 293);
-        doc.text(`Pág. ${p} / ${pages}`, W-M, 293, { align:'right' });
+        doc.text(`Pag. ${p} / ${doc.getNumberOfPages()}`, W-M, 293, { align:'right' });
     }
 
-    doc.save(`SimoCO2_Informe_Semana${hist.length}_${new Date().toLocaleDateString('es-CL').replace(/\//g,'-')}.pdf`);
+    const fecha = new Date().toLocaleDateString('es-CL').replace(/\//g,'-');
+    doc.save(`SimoCO2_Informe_T${cicloNum}_S${semanaTotal}_${fecha}.pdf`);
 }
 
 window.addEventListener('resize', () => { chartLinea.resize(); chartCircular.resize(); });
